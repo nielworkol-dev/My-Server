@@ -38,7 +38,7 @@
         .sidebar .active { background: #ffb6c1; color: white; font-weight: bold; }
         .storage-info { border-top: 1px solid #ffb6c1; padding-top: 10px; font-size: 11px; color: #777; }
         .progress-bar { background: #e2e8f0; border-radius: 10px; height: 6px; overflow: hidden; margin-top: 5px; }
-        .progress-fill { background: #ff69b4; height: 100%; width: 5%; }
+        .progress-fill { background: #ff69b4; height: 100%; width: 0%; }
         
         .file-grid { flex: 1; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start; overflow-y: auto; background: #ffffff; }
         .file-grid.list-mode { flex-direction: column; gap: 5px; }
@@ -81,7 +81,6 @@
         <div class="view-controls">
             <select id="sort-select" onchange="filterItems()">
                 <option value="name">Urutkan: Nama</option>
-                <option value="size">Urutkan: Ukuran</option>
             </select>
             <select id="view-select" onchange="toggleViewMode()">
                 <option value="grid-mode">Tampilan: Grid</option>
@@ -105,14 +104,12 @@
             </div>
         </div>
         
-        <!-- Grid Ruang Kerja Utama -->
         <div class="file-grid grid-mode" id="explorer-grid"></div>
     </div>
     
     <div class="upload-panel">
         <span id="status-text" style="font-size: 13px; color: #ff69b4; font-weight: bold;">Siap.</span>
         <div style="display: flex; gap: 10px;">
-            <!-- Perbaikan: Fungsi diikat langsung ke tombol fisik HTML -->
             <button class="btn-action btn-folder" onclick="createNewFolder()">📁 Tambah Folder</button>
             <label class="btn-action">
                 <input type="file" id="file-uploader" onchange="handleFileSelect(this)" multiple>
@@ -129,6 +126,7 @@
 </div>
 
 <script>
+    // DEFISINI GLOBAL VARIABEL DI AWAL AGAR TIDAK TERJADI EROR BREAKING SCRIPT
     let currentDrive = "Local Disk (D:)";
     let currentPath = ""; 
     let selectedItemId = null;
@@ -140,38 +138,36 @@
     const backBtn = document.getElementById('back-btn');
     const customMenu = document.getElementById('custom-menu');
 
-    // MENGGUNAKAN SIMPANAN LOCALSTORAGE STABIL AGAR TIDAK TERBLOKIR IZIN BROWSER
     function getStoredItems() {
-        return JSON.parse(localStorage.getItem('ActiveWindowsOS_Items')) || [
-            { id: "Local Disk (D:)__testing", name: "testing", type: "dir", drive: "Local Disk (D:)", path: "", date: new Date().toLocaleString(), size: "-" }
-        ];
+        let items = localStorage.getItem('ActiveWindowsOS_Items');
+        if (!items) {
+            const defaultStructure = [
+                { id: "Local Disk (D:)__testing", name: "testing", type: "dir", drive: "Local Disk (D:)", path: "", date: new Date().toLocaleString(), size: "-" }
+            ];
+            localStorage.setItem('ActiveWindowsOS_Items', JSON.stringify(defaultStructure));
+            return defaultStructure;
+        }
+        return JSON.parse(items);
     }
 
     function saveStoredItems(items) {
         localStorage.setItem('ActiveWindowsOS_Items', JSON.stringify(items));
     }
 
-    function loadDirectory() {
-        explorerGrid.innerHTML = "";
-        driveText.textContent = currentDrive;
-        pathText.textContent = currentPath ? " > " + currentPath.replace(/\/$/, "").replace(/\//g, " > ") : "";
-        backBtn.disabled = currentPath === "";
-
-        filterItems();
+    function updateStorageMetrics(items) {
+        let totalBytes = 0;
+        items.forEach(item => { if(item.rawSize) totalBytes += item.rawSize; });
+        let totalKB = (totalBytes / 1024).toFixed(1);
+        document.getElementById('storage-text').textContent = `${totalKB} KB / 5.0 MB digunakan`;
+        let percent = Math.min((totalBytes / (5000 * 1024)) * 100, 100);
+        document.getElementById('storage-bar').style.width = `${percent}%`;
     }
 
-    function filterItems() {
-        explorerGrid.innerHTML = "";
-        const items = getStoredItems();
-        const searchWord = document.getElementById('search-input').value.toLowerCase();
+    function createItemUI(item) {
+        const box = document.createElement('div');
+        box.className = 'item-box';
         
-        let visibleItems = items.filter(item => 
-            item.drive === currentDrive && 
-            item.path === currentPath &&
-            item.name.toLowerCase().includes(searchWord)
-        );
+        let icon = item.type === 'dir' ? '📂' : (item.fileType && item.fileType.startsWith('image/') ? '🖼️' : '📄');
 
-        // Sorting
-        const sortType = document.getElementById('sort-select').value;
-        if (sortType === "name") visibleItems.sort((a, b) => a.name.localeCompare(b.name));
-
+        box.innerHTML = `
+            <div><span class="item-icon">${icon}</span><span>${item.name}</span></div>
