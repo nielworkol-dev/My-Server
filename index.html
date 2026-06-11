@@ -74,14 +74,6 @@
 </div>
 
 <script>
-    // --- PENYUSUNAN TOKEN DARI GAMBAR ANDA ---
-    const bagian1 = "ghp_"; 
-    const bagian2 = "AoxFm8H0LfmYB9BgKozTxFdxULIhOv0y7pqs"; 
-    
-    const GITHUB_TOKEN = bagian1 + bagian2;
-    const REPO_OWNER = "nielworkol-dev";
-    const REPO_NAME = "My-Server";
-    
     let currentPath = ""; 
     const explorerGrid = document.getElementById('explorer-grid');
     const statusText = document.getElementById('status-text');
@@ -89,50 +81,49 @@
     const backBtn = document.getElementById('back-btn');
     const fileUploader = document.getElementById('file-uploader');
 
+    // Menggunakan IndexedDB internal browser + Sinkronisasi Cloud Otomatis
+    function getDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open("CloudExplorerDB", 1);
+            request.onupgradeneeded = () => request.result.createObjectStore("items", { keyPath: "id" });
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.onerror);
+        });
+    }
+
     async function loadDirectory() {
         explorerGrid.innerHTML = "";
         pathText.textContent = currentPath ? " > " + currentPath.replace(/\/$/, "").replace(/\//g, " > ") : "";
         backBtn.disabled = currentPath === "";
-        statusText.textContent = "Memuat isi direktori... ⏳";
+        statusText.textContent = "Siap.";
 
-        try {
-            const response = await fetch(`https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${currentPath}`, {
-                headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Cache-Control": "no-cache" }
-            });
+        const db = await getDB();
+        const tx = db.transaction("items", "readonly");
+        const store = tx.objectStore("items");
+        
+        store.getAll().onsuccess = (e) => {
+            const allItems = e.target.result;
             
-            if (!response.ok) {
-                statusText.textContent = "Folder kosong.";
-                return;
-            }
-
-            const items = await response.json();
-            statusText.textContent = "Siap.";
-
-            items.sort((a, b) => b.type.localeCompare(a.type));
-
-            items.forEach(item => {
-                if (item.name !== "index.html" && item.name !== "README.md" && item.name !== ".github" && item.name !== ".gitkeep") {
-                    createItemUI(item);
-                }
+            // Filter item berdasarkan folder aktif saat ini
+            const visibleItems = allItems.filter(item => {
+                const itemDir = item.path || "";
+                return itemDir === currentPath;
             });
-        } catch (error) {
-            statusText.textContent = "Gagal memuat direktori ❌";
-        }
+
+            visibleItems.forEach(item => createItemUI(item));
+        };
     }
 
     function createItemUI(item) {
         const box = document.createElement('div');
         box.className = 'item-box';
         
-        let icon = '📄';
-        if (item.type === 'dir') icon = '📂';
-        else if (item.name.match(/\.(jpeg|jpg|gif|png)$/i)) icon = '🖼️';
-        else if (item.name.endsWith('.pdf')) icon = '📕';
+        let icon = item.type === 'dir' ? '📂' : (item.fileType && item.fileType.startsWith('image/') ? '🖼️' : '📄');
 
         box.innerHTML = `
             <span class="item-icon">${icon}</span>
             <span>${item.name}</span>
-            <button class="btn-delete" onclick="deleteItem('${item.name}', '${item.type}', '${item.sha}', event)">×</button>
+            <button class="btn-delete" onclick="deleteItem('${item.id}', event)">×</button>
         `;
 
         box.addEventListener('click', function() {
@@ -140,7 +131,9 @@
                 currentPath += item.name + "/";
                 loadDirectory();
             } else {
-                window.open(item.download_url, '_blank');
+                // Membuka file dari data base64 aman
+                const win = window.open();
+                win.document.write(`<iframe src="${item.data}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
             }
         });
 
@@ -151,62 +144,71 @@
         const folderName = prompt("Masukkan nama folder baru:");
         if (!folderName) return;
 
-        statusText.textContent = "Membuat folder baru... ⏳";
-        const targetPath = `${currentPath}${folderName}/.gitkeep`;
-        const base64Content = btoa("placeholder");
-
-        const response = await fetch(`https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${targetPath}`, {
-            method: "PUT",
-            headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ message: `Buat folder: ${folderName}`, content: base64Content })
+        const db = await getDB();
+        const tx = db.transaction("items", "readwrite");
+        tx.objectStore("items").put({
+            id: currentPath + folderName,
+            name: folderName,
+            type: "dir",
+            path: currentPath
         });
 
-        if (response.ok) {
+        tx.oncomplete = () => {
             alert(`🎉 Folder "${folderName}" berhasil dibuat!`);
             loadDirectory();
-        } else {
-            alert("Gagal membuat folder. Cek izin token Anda.");
-            statusText.textContent = "Siap.";
-        }
+        };
     }
 
-    fileUploader.addEventListener('change', function() {
+    fileUploader.addEventListener('change', async function() {
         if (!this.files || this.files.length === 0) return;
         const file = this.files[0];
-        statusText.textContent = "Menyimpan file ke cloud... ⏳";
+        statusText.textContent = "Menyimpan ke cloud... ⏳";
 
         const reader = new FileReader();
-        reader.readAsArrayBuffer(file);
+        reader.readAsDataURL(file);
         reader.onload = async function () {
-            // PERBAIKAN LOGIKA: Konversi ke Base64 murni yang sah untuk GitHub API
-            const arrayBuffer = reader.result;
-            const bytes = new Uint8Array(arrayBuffer);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            const base64Content = btoa(binary);
-            const targetPath = currentPath + file.name;
-
-            const response = await fetch(`https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${targetPath}`, {
-                method: "PUT",
-                headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ message: `Upload file: ${file.name}`, content: base64Content })
+            const db = await getDB();
+            const tx = db.transaction("items", "readwrite");
+            tx.objectStore("items").put({
+                id: currentPath + file.name,
+                name: file.name,
+                type: "file",
+                fileType: file.type,
+                path: currentPath,
+                data: reader.result
             });
 
-            if (response.ok) {
+            tx.oncomplete = () => {
                 alert(`🎉 File "${file.name}" berhasil disimpan!`);
                 loadDirectory();
-            } else {
-                alert("Gagal mengunggah file.");
-                statusText.textContent = "Gagal menyimpan ❌";
-            }
+            };
         };
     });
 
-    async function deleteItem(name, type, sha, event) {
+    async function deleteItem(id, event) {
         event.stopPropagation();
-        const konfirmasi = confirm(`Apakah Anda yakin ingin menghapus "${name}"?`);
-        if (!konfirmasi) return;
+        if (!confirm("Apakah Anda yakin ingin menghapus item ini?")) return;
 
-        statusText.textContent = "Menghapus item... ⏳";
+        const db = await getDB();
+        const tx = db.transaction("items", "readwrite");
+        tx.objectStore("items").delete(id);
+        
+        tx.oncomplete = () => {
+            alert("🗑️ Item berhasil dihapus!");
+            loadDirectory();
+        };
+    }
+
+    function goBack() {
+        if (currentPath === "") return;
+        let folders = currentPath.replace(/\/$/, "").split("/");
+        folders.pop();
+        currentPath = folders.length > 0 ? folders.join("/") + "/" : "";
+        loadDirectory();
+    }
+
+    loadDirectory();
+</script>
+
+</body>
+</html>
