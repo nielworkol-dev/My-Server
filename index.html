@@ -1,10 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Server Gratis Saya</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Upload Gemoy ✨</title>
+    <style>
+        body { 
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Courier New', sans-serif; 
+            background: linear-gradient(135deg, #ffeef8 0%, #e6f0ff 100%); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh;
+            overflow: hidden;
+        }
+        .upload-card { 
+            background: white; 
+            padding: 35px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.4); 
+            text-align: center; 
+            max-width: 400px; 
+            width: 100%; 
+            border: 4px solid #ffb6c1;
+            position: relative;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        .upload-card:hover {
+            transform: scale(1.02) rotate(1deg);
+        }
+        .maskot {
+            font-size: 50px;
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+            display: inline-block;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        h2 { color: #ff69b4; margin: 10px 0 5px 0; font-size: 24px; }
+        p { color: #778899; font-size: 14px; margin-bottom: 25px; }
+        input[type="file"] { display: none; }
+        .custom-file-upload { 
+            border: 3px dashed #ffb6c1; 
+            background-color: #fff5f7;
+            color: #ff69b4; 
+            padding: 20px; 
+            border-radius: 16px; 
+            display: inline-block; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 85%; 
+            margin-bottom: 20px; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 #ffb6c1;
+        }
+        .custom-file-upload:hover { 
+            background: #ffe6eb; 
+            border-color: #ff69b4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #ff69b4;
+        }
+        .custom-file-upload:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #ff69b4;
+        }
+        button { 
+            background: #10b981; 
+            color: white; 
+            border: none; 
+            padding: 15px 25px; 
+            border-radius: 50px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            box-shadow: 0 5px 0 #047857;
+            transition: all 0.2s ease;
+        }
+        button:hover { 
+            background: #059669; 
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #047857;
+        }
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #047857;
+        }
+        .file-name { 
+            margin-top: -5px; 
+            margin-bottom: 20px; 
+            font-size: 14px; 
+            color: #ff69b4; 
+            font-weight: bold;
+            background: #fff0f3;
+            padding: 8px;
+            border-radius: 8px;
+            display: none;
+            word-break: break-all;
+        }
+        /* Efek balon hiasan latar belakang */
+        .decor {
+            position: absolute;
+            font-size: 25px;
+            opacity: 0.3;
+            animation: float 4s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(10deg); }
+        }
+    </style>
 </head>
-<body style="text-align: center; font-family: Arial; margin-top: 50px;">
-    <h1>Halo! Server Ini Berhasil Diakses</h1>
-    <p>Link ini bisa dibuka dari HP, Laptop, atau Tablet apa saja lewat internet.</p>
+<body>
+
+<!-- Hiasan Lucu di Latar Belakang -->
+<div class="decor" style="top: 10%; left: 10%; animation-delay: 0s;">✨</div>
+<div class="decor" style="top: 20%; right: 15%; animation-delay: 1s;">🎈</div>
+<div class="decor" style="bottom: 15%; left: 15%; animation-delay: 2s;">🌸</div>
+<div class="decor" style="bottom: 10%; right: 10%; animation-delay: 1.5s;">🧸</div>
+
+<div class="upload-card">
+    <!-- Maskot yang bisa melompat -->
+    <div class="maskot" id="bunny-maskot">🐰</div>
+    <h2 id="judul-status">Pusat Upload Gemoy</h2>
+    <p id="petunjuk-status">Suapi kelinci ini dengan foto atau dokumenmu! Pompom~</p>
+    
+    <!-- GANTI link action di bawah ini dengan Endpoint URL Formspree Anda -->
+    <form action="https://formspree.io/f/xpqejrro" method="POST" enctype="multipart/form-data" id="upload-form">
+        <label class="custom-file-upload">
+            <input type="file" name="dokumen_user" id="file-chooser" required>
+            📂 Pilih File Kamu Di Sini!
+        </label>
+        
+        <div class="file-name" id="file-name-display">Belum ada file</div>
+        
+        <button type="submit" id="submit-btn">Kirim Sekarang! 🚀</button>
+    </form>
+</div>
+
+<script>
+    const fileChooser = document.getElementById('file-chooser');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const mascot = document.getElementById('bunny-maskot');
+    const judul = document.getElementById('judul-status');
+    const petunjuk = document.getElementById('petunjuk-status');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Interaksi 1: Ketika file dipilih
+    fileChooser.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            const name = this.files[0].name;
+            fileNameDisplay.textContent = "Fix Upload: " + name;
+            fileNameDisplay.style.display = "block";
+            
+            // Perubahan ekspresi maskot & teks (Interaktif)
+            mascot.textContent = "🤩"; 
+            mascot.style.animation = "bounce 0.5s infinite"; // Lompat lebih cepat
+            judul.textContent = "Wah, Nyam-nyam! 🥕";
+            petunjuk.textContent = "Filenya sudah siap diumpankan. Klik tombol hijau di bawah!";
+        }
+    });
+
+    // Interaksi 2: Ketika tombol kirim diklik
+    document.getElementById('upload-form').addEventListener('submit', function() {
+        mascot.textContent = "🚀";
+        judul.textContent = "Meluncurrr...";
+        submitBtn.textContent = "Sedang Mengirim... ⏱️";
+        submitBtn.style.background = "#94a3b8";
+    });
+</script>
+
 </body>
 </html>
