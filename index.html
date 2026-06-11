@@ -3,37 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Komputer Pro - Local Disk (D:)</title>
+    <title>Windows Explorer OS - Perfect Edition</title>
     <style>
         body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: linear-gradient(135deg, #ffeef8 0%, #e6f0ff 100%); 
             margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden;
+            user-select: none;
         }
         .pc-window { 
-            background: #ffffff; width: 95%; max-width: 900px; height: 85vh; border-radius: 16px; border: 3px solid #ffb6c1;
-            box-shadow: 0 10px 30px rgba(255, 182, 193, 0.4); display: flex; flex-direction: column; overflow: hidden;
+            background: #ffffff; width: 95%; max-width: 1100px; height: 88vh; border-radius: 12px; border: 3px solid #ffb6c1;
+            box-shadow: 0 15px 40px rgba(255, 182, 193, 0.5); display: flex; flex-direction: column; overflow: hidden;
         }
         .title-bar { 
             background: #ffb6c1; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; font-size: 14px;
         }
         .win-buttons div { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-left: 5px; }
-        .address-bar { 
-            background: #fff0f3; padding: 10px 15px; border-bottom: 2px solid #ffb6c1; font-size: 13px; color: #ff69b4; font-weight: bold; display: flex; align-items: center; gap: 5px;
-        }
-        .btn-back { background: #ff69b4; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; }
-        .btn-back:disabled { background: #ccc; cursor: not-allowed; }
-        .main-content { flex: 1; display: flex; overflow: hidden; }
-        .sidebar { width: 180px; background: #fff5f7; border-right: 2px solid #ffb6c1; padding: 15px; font-size: 13px; color: #555; }
-        .sidebar div { padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px;}
-        .sidebar .active { background: #ffb6c1; color: white; font-weight: bold; }
-        .file-grid { flex: 1; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start; overflow-y: auto; }
         
-        .item-box { width: 90px; text-align: center; font-size: 12px; color: #333; cursor: pointer; padding: 10px; border-radius: 8px; transition: 0.2s; word-break: break-all; position: relative; }
-        .item-box:hover { background: #ffe6eb; transform: scale(1.05); }
-        .item-icon { font-size: 42px; margin-bottom: 5px; display: block; }
-        .btn-delete { position: absolute; top: 2px; right: 2px; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: none; font-weight: bold; }
-        .item-box:hover .btn-delete { display: block; }
+        /* Toolbar Atas Kompleks */
+        .toolbar {
+            background: #fff0f3; padding: 10px 15px; border-bottom: 2px solid #ffb6c1; display: flex; align-items: center; justify-content: space-between; gap: 10px; wrap: flex-wrap;
+        }
+        .nav-controls { display: flex; align-items: center; gap: 5px; flex: 1; }
+        .btn-back { background: #ff69b4; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-back:disabled { background: #ccc; cursor: not-allowed; }
+        .address-box { background: white; border: 1px solid #ffb6c1; padding: 6px 12px; border-radius: 6px; flex: 1; font-size: 13px; color: #ff69b4; font-weight: bold; }
+        
+        /* Search & View Controls */
+        .search-box { padding: 6px 12px; border: 1px solid #ffb6c1; border-radius: 6px; width: 180px; font-size: 12px; outline: none; }
+        .view-controls select { padding: 5px; border: 1px solid #ffb6c1; border-radius: 6px; font-size: 12px; color: #555; background: white; outline: none; cursor: pointer; }
+
+        .main-content { flex: 1; display: flex; overflow: hidden; position: relative; }
+        
+        /* Sidebar dengan Status Storage */
+        .sidebar { width: 190px; background: #fff5f7; border-right: 2px solid #ffb6c1; padding: 15px; font-size: 13px; color: #555; display: flex; flex-direction: column; justify-content: space-between; }
+        .sidebar-title { font-weight: bold; color: #ff69b4; margin-bottom: 10px; padding-left: 8px;}
+        .nav-item { padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: 0.2s;}
+        .nav-item:hover { background: #ffe6eb; }
+        .sidebar .active { background: #ffb6c1; color: white; font-weight: bold; }
+        .storage-info { border-top: 1px solid #ffb6c1; padding-top: 10px; font-size: 11px; color: #777; }
+        .progress-bar { background: #e2e8f0; border-radius: 10px; height: 6px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { background: #ff69b4; height: 100%; width: 5%; }
+        
+        /* Area Grid & List View */
+        .file-grid { flex: 1; padding: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start; overflow-y: auto; background: #ffffff; }
+        .file-grid.dragover { background: #fff0f3; border: 2px dashed #ff69b4; }
+        .file-grid.list-mode { flex-direction: column; gap: 5px; }
+        
+        /* Desain Item Grid vs List */
+        .item-box { width: 95px; text-align: center; font-size: 12px; color: #333; cursor: pointer; padding: 10px; border-radius: 8px; transition: 0.2s; word-break: break-all; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .item-box:hover { background: #ffe6eb; transform: scale(1.03); }
+        .item-icon { font-size: 44px; margin-bottom: 5px; display: block; }
+        
+        /* List Mode Style override */
+        .list-mode .item-box { width: auto; flex-direction: row; justify-content: space-between; padding: 8px 15px; text-align: left; }
+        .list-mode .item-box .item-icon { font-size: 20px; margin-bottom: 0; margin-right: 10px; display: inline; }
+        .list-mode .meta-info { display: inline; font-size: 11px; color: #888; margin-left: auto; padding-right: 20px; }
+        .grid-mode .meta-info { display: none; }
+        
+        /* Context Menu */
+        .context-menu { position: absolute; background: white; border: 1px solid #ffb6c1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 8px; width: 150px; display: none; z-index: 1000; font-size: 13px; overflow: hidden; }
+        .context-menu div { padding: 10px 15px; cursor: pointer; color: #333; }
+        .context-menu div:hover { background: #fff0f3; color: #ff69b4; font-weight: bold; }
         
         .upload-panel { padding: 15px 20px; background: #fff5f7; border-top: 2px solid #ffb6c1; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .btn-action { background: #ff69b4; color: white; border: none; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
@@ -47,44 +78,83 @@
 
 <div class="pc-window">
     <div class="title-bar">
-        <span>📁 Local Disk (D:) - Windows Explorer Cloud Pro</span>
+        <span>📁 Windows Explorer OS - Perfect System Edition</span>
         <div class="win-buttons"><div style="background: #ffbd44;"></div><div style="background: #ff605c;"></div></div>
     </div>
-    <div class="address-bar">
-        <button class="btn-back" id="back-btn" disabled onclick="goBack()">⬅ Back</button>
-        💻 PC &gt; Local Disk (D:) <span id="path-text"></span>
+    
+    <!-- Toolbar Komplit -->
+    <div class="toolbar">
+        <div class="nav-controls">
+            <button class="btn-back" id="back-btn" disabled onclick="goBack()">⬅ Back</button>
+            <div class="address-box">💻 PC &gt; <span id="drive-text">Local Disk (D:)</span><span id="path-text"></span></div>
+        </div>
+        <input type="text" class="search-box" id="search-input" placeholder="🔍 Cari berkas di sini..." oninput="filterItems()">
+        <div class="view-controls">
+            <select id="sort-select" onchange="loadDirectory()">
+                <option value="name">Urutkan: Nama</option>
+                <option value="size">Urutkan: Ukuran</option>
+                <option value="date">Urutkan: Tanggal</option>
+            </select>
+            <select id="view-select" onchange="toggleViewMode()">
+                <option value="grid-mode">Tampilan: Grid</option>
+                <option value="list-mode">Tampilan: List</option>
+            </select>
+        </div>
     </div>
+    
     <div class="main-content">
         <div class="sidebar">
-            <div style="font-weight: bold; color: #ff69b4;">Akses Cepat</div>
-            <div>🖥️ Desktop</div><div>📥 Downloads</div><div class="active">💾 Local Disk (D:)</div>
+            <div>
+                <div class="sidebar-title">Akses Cepat</div>
+                <div class="nav-item" id="nav-Desktop" onclick="changeDrive('Desktop')">🖥️ Desktop</div>
+                <div class="nav-item" id="nav-Downloads" onclick="changeDrive('Downloads')">📥 Downloads</div>
+                <div class="nav-item active" id="nav-LocalDiskD" onclick="changeDrive('Local Disk (D:)')">💾 Local Disk (D:)</div>
+            </div>
+            <div class="storage-info">
+                <span>Penyimpanan Sistem Cloud</span>
+                <div class="progress-bar"><div class="progress-fill" id="storage-bar"></div></div>
+                <div style="margin-top: 4px;" id="storage-text">0 KB / 5.0 MB digunakan</div>
+            </div>
         </div>
-        <div class="file-grid" id="explorer-grid"></div>
+        
+        <div class="file-grid grid-mode" id="explorer-grid"></div>
     </div>
+    
     <div class="upload-panel">
-        <span id="status-text" style="font-size: 13px; color: #ff69b4; font-weight: bold;">Pilih aksi untuk direktori aktif:</span>
+        <span id="status-text" style="font-size: 13px; color: #ff69b4; font-weight: bold;">Siap.</span>
         <div style="display: flex; gap: 10px;">
             <button class="btn-action btn-folder" onclick="createNewFolder()">📁 Tambah Folder</button>
             <label class="btn-action">
-                <input type="file" id="file-uploader">
-                ➕ Pilih & Simpan File
+                <input type="file" id="file-uploader" multiple>
+                ➕ Simpan File Ke Sini
             </label>
         </div>
     </div>
 </div>
 
+<div class="context-menu" id="custom-menu">
+    <div onclick="triggerRename()">✏️ Ubah Nama</div>
+    <div onclick="triggerDetails()">ℹ️ Detail File</div>
+    <div style="color: #ff4d4d;" onclick="triggerDelete()">🗑️ Hapus Data</div>
+</div>
+
 <script>
+    let currentDrive = "Local Disk (D:)";
     let currentPath = ""; 
+    let selectedItemId = null;
+    let cachedItems = [];
+
     const explorerGrid = document.getElementById('explorer-grid');
     const statusText = document.getElementById('status-text');
     const pathText = document.getElementById('path-text');
+    const driveText = document.getElementById('drive-text');
     const backBtn = document.getElementById('back-btn');
     const fileUploader = document.getElementById('file-uploader');
+    const customMenu = document.getElementById('custom-menu');
 
-    // Menggunakan IndexedDB internal browser + Sinkronisasi Cloud Otomatis
     function getDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open("CloudExplorerDB", 1);
+            const request = indexedDB.open("PerfectExplorerDB", 1);
             request.onupgradeneeded = () => request.result.createObjectStore("items", { keyPath: "id" });
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.onerror);
@@ -93,122 +163,15 @@
 
     async function loadDirectory() {
         explorerGrid.innerHTML = "";
+        driveText.textContent = currentDrive;
         pathText.textContent = currentPath ? " > " + currentPath.replace(/\/$/, "").replace(/\//g, " > ") : "";
         backBtn.disabled = currentPath === "";
-        statusText.textContent = "Siap.";
 
         const db = await getDB();
-        const tx = db.transaction("items", "readonly");
-        const store = tx.objectStore("items");
-        
-        store.getAll().onsuccess = (e) => {
-            const allItems = e.target.result;
-            
-            // Filter item berdasarkan folder aktif saat ini
-            const visibleItems = allItems.filter(item => {
-                const itemDir = item.path || "";
-                return itemDir === currentPath;
-            });
-
-            visibleItems.forEach(item => createItemUI(item));
+        db.transaction("items", "readonly").objectStore("items").getAll().onsuccess = (e) => {
+            cachedItems = e.target.result;
+            updateStorageMetrics(cachedItems);
+            filterAndDisplayItems();
         };
     }
 
-    function createItemUI(item) {
-        const box = document.createElement('div');
-        box.className = 'item-box';
-        
-        let icon = item.type === 'dir' ? '📂' : (item.fileType && item.fileType.startsWith('image/') ? '🖼️' : '📄');
-
-        box.innerHTML = `
-            <span class="item-icon">${icon}</span>
-            <span>${item.name}</span>
-            <button class="btn-delete" onclick="deleteItem('${item.id}', event)">×</button>
-        `;
-
-        box.addEventListener('click', function() {
-            if (item.type === 'dir') {
-                currentPath += item.name + "/";
-                loadDirectory();
-            } else {
-                // Membuka file dari data base64 aman
-                const win = window.open();
-                win.document.write(`<iframe src="${item.data}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-            }
-        });
-
-        explorerGrid.appendChild(box);
-    }
-
-    async function createNewFolder() {
-        const folderName = prompt("Masukkan nama folder baru:");
-        if (!folderName) return;
-
-        const db = await getDB();
-        const tx = db.transaction("items", "readwrite");
-        tx.objectStore("items").put({
-            id: currentPath + folderName,
-            name: folderName,
-            type: "dir",
-            path: currentPath
-        });
-
-        tx.oncomplete = () => {
-            alert(`🎉 Folder "${folderName}" berhasil dibuat!`);
-            loadDirectory();
-        };
-    }
-
-    fileUploader.addEventListener('change', async function() {
-        if (!this.files || this.files.length === 0) return;
-        const file = this.files[0];
-        statusText.textContent = "Menyimpan ke cloud... ⏳";
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async function () {
-            const db = await getDB();
-            const tx = db.transaction("items", "readwrite");
-            tx.objectStore("items").put({
-                id: currentPath + file.name,
-                name: file.name,
-                type: "file",
-                fileType: file.type,
-                path: currentPath,
-                data: reader.result
-            });
-
-            tx.oncomplete = () => {
-                alert(`🎉 File "${file.name}" berhasil disimpan!`);
-                loadDirectory();
-            };
-        };
-    });
-
-    async function deleteItem(id, event) {
-        event.stopPropagation();
-        if (!confirm("Apakah Anda yakin ingin menghapus item ini?")) return;
-
-        const db = await getDB();
-        const tx = db.transaction("items", "readwrite");
-        tx.objectStore("items").delete(id);
-        
-        tx.oncomplete = () => {
-            alert("🗑️ Item berhasil dihapus!");
-            loadDirectory();
-        };
-    }
-
-    function goBack() {
-        if (currentPath === "") return;
-        let folders = currentPath.replace(/\/$/, "").split("/");
-        folders.pop();
-        currentPath = folders.length > 0 ? folders.join("/") + "/" : "";
-        loadDirectory();
-    }
-
-    loadDirectory();
-</script>
-
-</body>
-</html>
